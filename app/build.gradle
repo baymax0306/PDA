@@ -1,0 +1,44 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 26
+    defaultConfig {
+        applicationId "com.example.zhongweichang.pda"
+        minSdkVersion 19
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+configurations.all {
+    resolutionStrategy.force 'com.android.support:support-annotations:27.1.1'
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    compile 'com.github.z3896823:PanelList:v1.3.0'
+    implementation 'com.github.yuzhiqiang1993:zxing:2.1.8'
+    //二维码
+    //ButterKnife框架  支持View注入
+    implementation 'com.jakewharton:butterknife:8.8.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
+    implementation files('libs/android-async-2.1.6-customized.jar')
+    compile 'com.github.jokermonn:permissions4m:2.1.2-lib'
+    annotationProcessor 'com.github.jokermonn:permissions4m:2.1.2-processor'
+    implementation 'org.greenrobot:eventbus:3.0.0'
+    implementation files('libs/ksoap2-android-assembly-3.2.0-jar-with-dependencies.jar')
+    implementation 'com.github.orhanobut:logger:2.2.0'
+}
