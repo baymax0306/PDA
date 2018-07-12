@@ -400,7 +400,16 @@ public class MainActivity extends AppCompatActivity {
 //                    msg.what = TypeDefine.MSG_CLI_RESQUEST;
 //                    msg.obj = barcode.getText().toString();
 //                    clientThread.revHandler.sendMessage(msg);
-                    socketService.sendOrder(barcode.getText().toString());
+                    //socketService.sendOrder(barcode.getText().toString());
+
+                    contentList.clear();
+                    List<String> data = new ArrayList<>();
+                    data.add("1-2-3");
+                    data.add("5");
+                    data.add("15");
+                    data.add("正常");
+                    contentList.add(data);
+                    adapter.notifyDataSetChanged();
 
                 } catch (Exception e){
                     e.printStackTrace();

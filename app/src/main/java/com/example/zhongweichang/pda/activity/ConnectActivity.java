@@ -3,6 +3,7 @@ package com.example.zhongweichang.pda.activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.nfc.Tag;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -39,9 +40,9 @@ import butterknife.OnClick;
 public class ConnectActivity extends AppCompatActivity {
     private static final String TAG = "ConnectActivity";
     @BindView(R.id.ipTv)
-    EditText ipTv;
+    EditText tv_ip;
     @BindView(R.id.portTv)
-    EditText portTv;
+    EditText tv_port;
     @BindView(R.id.connectBtn)
     Button connectBtn;
 
@@ -78,13 +79,26 @@ public class ConnectActivity extends AppCompatActivity {
         setContentView(R.layout.activity_connect);
         ButterKnife.bind(this);
 
+        Logger.addLogAdapter(new AndroidLogAdapter());
 
         /*register EventBus*/
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
         }
 
-        Logger.addLogAdapter(new AndroidLogAdapter());
+
+        SharedPreferences pref = getSharedPreferences("data", MODE_PRIVATE);
+        if (null != pref) {
+            String ip = pref.getString("IP", "");
+            String port = pref.getString("PORT", "");
+
+            if (null != ip)
+                tv_ip.setText(ip);
+            if (null != port)
+                tv_port.setText(port);
+        }
+
+
     }
 
 
@@ -113,8 +127,8 @@ public class ConnectActivity extends AppCompatActivity {
 //        intent.putExtra(Constants.INTENT_PORT, port);
 //        startService(intent);
 
-        String ip = ipTv.getText().toString().trim();
-        String port = portTv.getText().toString().trim();
+        String ip = tv_ip.getText().toString().trim();
+        String port = tv_port.getText().toString().trim();
         if (wsrHelper == null)
             wsrHelper = new WsrHelper(ip, port);
 
@@ -162,10 +176,16 @@ public class ConnectActivity extends AppCompatActivity {
             EventBus.getDefault().unregister(this);
         }
 
-        /*如果没有连接成功  则退出的时候停止服务 */
-        if (!isConnectSuccess) {
-            Intent intent = new Intent(this, SocketService.class);
-            stopService(intent);
-        }
+        SharedPreferences.Editor editor = getSharedPreferences("data", MODE_PRIVATE).edit();
+        editor.putString("IP", tv_ip.getText().toString());
+        editor.putString("PORT", tv_port.getText().toString());
+        editor.apply();
+
+
+//        /*如果没有连接成功  则退出的时候停止服务 */
+//        if (!isConnectSuccess) {
+//            Intent intent = new Intent(this, SocketService.class);
+//            stopService(intent);
+//        }
     }
 }
