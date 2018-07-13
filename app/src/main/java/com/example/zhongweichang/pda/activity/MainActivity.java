@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -13,6 +14,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,6 +22,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -34,6 +38,10 @@ import com.joker.annotation.PermissionsGranted;
 import com.joker.annotation.PermissionsRationale;
 import com.joker.api.Permissions4M;
 import com.orhanobut.logger.Logger;
+import com.rmondjone.locktableview.DisplayUtil;
+import com.rmondjone.locktableview.LockTableView;
+import com.rmondjone.xrecyclerview.ProgressStyle;
+import com.rmondjone.xrecyclerview.XRecyclerView;
 import com.yzq.zxinglibrary.android.CaptureActivity;
 import com.yzq.zxinglibrary.common.Constant;
 
@@ -42,6 +50,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,19 +85,24 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection sc;
     public SocketService socketService;
 
+    @BindView(R.id.contentView)
+    LinearLayout mContentView; //表格控件
+    private ArrayList<String> tableTitleData;        //表格标题行
+    private ArrayList<ArrayList<String>> tableData;  //表格数据
+    private LockTableView mLockTableView = null;        //表格控件
     @Override
     protected void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-        initView();
+        //initView();
 
-        initRowDataList();
-        initContentDataList();
-        initItemWidthList();
-
-        initAdapter();
-        pl_root.setAdapter(adapter);
+//        initRowDataList();
+//        initContentDataList();
+//        initItemWidthList();
+//
+//        initAdapter();
+//        pl_root.setAdapter(adapter);
 
         // 注意：
         // 如果你决定自己实现自己的Column，而不是使用默认的1，2，3。。。
@@ -96,14 +110,190 @@ public class MainActivity extends AppCompatActivity {
         //initSocket();
         addListener();
 
-        bindSocketService();
+        //bindSocketService();
 
         /*register EventBus*/
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
         }
 
+        initDisplayOpinion();
+        initTableControl();
+
         Logger.d("进入加药界面！");
+    }
+
+    private void changeTableData(ArrayList<ArrayList<String>> tableDatas){
+
+        tableData.clear();
+        tableData.add(tableTitleData);
+        tableData.addAll(tableDatas);
+
+        mLockTableView.setTableDatas(tableData);
+    }
+
+    private void initTableControl () {
+        tableTitleData = new ArrayList<String>();
+        tableTitleData.add("地址");
+        tableTitleData.add("当前量");
+        tableTitleData.add("需加量");
+        tableTitleData.add("加药状态");
+
+        tableData = new ArrayList<ArrayList<String>>();
+        tableData.add(tableTitleData);
+        ArrayList<String> testData = new ArrayList<String>();
+        testData.add("1-3-5");
+        testData.add("5");
+        testData.add("6");
+        testData.add("未完成");
+        tableData.add(testData);
+
+        //构造假数据
+//        ArrayList<ArrayList<String>> mTableDatas = new ArrayList<ArrayList<String>>();
+//        ArrayList<String> mfristData = new ArrayList<String>();
+//        mfristData.add("标题");
+//        for (int i = 0; i < 10; i++) {
+//            mfristData.add("标题" + i);
+//        }
+//        mTableDatas.add(mfristData);
+//        for (int i = 0; i < 20; i++) {
+//            ArrayList<String> mRowDatas = new ArrayList<String>();
+//            mRowDatas.add("标题" + i);
+//            for (int j = 0; j < 10; j++) {
+//                mRowDatas.add("数据" + j);
+//            }
+//            mTableDatas.add(mRowDatas);
+//        }
+        mLockTableView = new LockTableView(this, mContentView, tableData);
+        Log.e("表格加载开始", "当前线程：" + Thread.currentThread());
+        mLockTableView.setLockFristColumn(true) //是否锁定第一列
+                .setLockFristRow(true) //是否锁定第一行
+                .setMaxColumnWidth(60) //列最大宽度
+                .setMinColumnWidth(20) //列最小宽度
+                .setColumnWidth(0, 60)
+                //.setColumnWidth(1,30) //设置指定列文本宽度
+                //.setColumnWidth(2,20)
+                .setMinRowHeight(10)//行最小高度
+                .setMaxRowHeight(20)//行最大高度
+                .setTextViewSize(10) //单元格字体大小
+                .setFristRowBackGroudColor(R.color.table_head)//表头背景色
+                .setTableHeadTextColor(R.color.beijin)//表头字体颜色
+                .setTableContentTextColor(R.color.border_color)//单元格字体颜色
+                .setCellPadding(15)//设置单元格内边距(dp)
+                .setNullableString("N/A") //空值替换值
+                .setTableViewListener(new LockTableView.OnTableViewListener() {
+                    @Override
+                    public void onTableViewScrollChange(int x, int y) {
+//                        Log.e("滚动值","["+x+"]"+"["+y+"]");
+                    }
+                })//设置横向滚动回调监听
+                .setTableViewRangeListener(new LockTableView.OnTableViewRangeListener() {
+                    @Override
+                    public void onLeft(HorizontalScrollView view) {
+                        Log.e("滚动边界","滚动到最左边");
+                    }
+
+                    @Override
+                    public void onRight(HorizontalScrollView view) {
+                        Log.e("滚动边界","滚动到最右边");
+                    }
+                })//设置横向滚动边界监听
+                .setOnLoadingListener(new LockTableView.OnLoadingListener() {
+                    @Override
+                    public void onRefresh(final XRecyclerView mXRecyclerView, final ArrayList<ArrayList<String>> mTableDatas) {
+                        Log.e("onRefresh",Thread.currentThread().toString());
+//                        Handler handler = new Handler();
+//                        handler.postDelayed(new Runnable() {
+//                            @Override
+//                            public void run() {
+////                                Log.e("现有表格数据", mTableDatas.toString());
+//                                //构造假数据
+//                                ArrayList<ArrayList<String>> mTableDatas = new ArrayList<ArrayList<String>>();
+//                                ArrayList<String> mfristData = new ArrayList<String>();
+//                                mfristData.add("标题");
+//                                for (int i = 0; i < 10; i++) {
+//                                    mfristData.add("标题" + i);
+//                                }
+//                                mTableDatas.add(mfristData);
+//                                for (int i = 0; i < 20; i++) {
+//                                    ArrayList<String> mRowDatas = new ArrayList<String>();
+//                                    mRowDatas.add("标题" + i);
+//                                    for (int j = 0; j < 10; j++) {
+//                                        mRowDatas.add("数据" + j);
+//                                    }
+//                                    mTableDatas.add(mRowDatas);
+//                                }
+//                                mLockTableView.setTableDatas(mTableDatas);
+//                                mXRecyclerView.refreshComplete();
+//                            }
+//                        }, 1000);
+                    }
+
+                    @Override
+                    public void onLoadMore(final XRecyclerView mXRecyclerView, final ArrayList<ArrayList<String>> mTableDatas) {
+                        Log.e("onLoadMore",Thread.currentThread().toString());
+                        Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+//                                if (mTableDatas.size() <= 60) {
+//                                    for (int i = 0; i < 10; i++) {
+//                                        ArrayList<String> mRowDatas = new ArrayList<String>();
+//                                        mRowDatas.add("标题" + (mTableDatas.size() - 1));
+//                                        for (int j = 0; j < 10; j++) {
+//                                            mRowDatas.add("数据" + j);
+//                                        }
+//                                        mTableDatas.add(mRowDatas);
+//                                    }
+//                                    mLockTableView.setTableDatas(mTableDatas);
+//                                } else {
+//                                    mXRecyclerView.setNoMore(true);
+//                                }
+                                mXRecyclerView.setNoMore(true);
+                                mXRecyclerView.loadMoreComplete();
+                            }
+                        }, 1000);
+                    }
+                })
+                .setOnItemClickListenter(new LockTableView.OnItemClickListenter() {
+                    @Override
+                    public void onItemClick(View item, int position) {
+                        //Log.e("点击事件",position+"");
+                        Logger.d("点击了第"+position+"行");
+                        //Toast.makeText(MainActivity.this, "点击了第"+position+"行", Toast.LENGTH_SHORT).show();
+                        String loc = tableData.get(position).get(0);
+
+                        Logger.d("加药地址是：" + loc);
+                    }
+                })
+                .setOnItemLongClickListenter(new LockTableView.OnItemLongClickListenter() {
+                    @Override
+                    public void onItemLongClick(View item, int position) {
+                        Log.e("长按事件",position+"");
+                    }
+                })
+                .setOnItemSeletor(R.color.dashline_color)//设置Item被选中颜色
+                .show(); //显示表格,此方法必须调用
+        mLockTableView.getTableScrollView().setPullRefreshEnabled(true);
+        mLockTableView.getTableScrollView().setLoadingMoreEnabled(true);
+        mLockTableView.getTableScrollView().setRefreshProgressStyle(ProgressStyle.SquareSpin);
+        //属性值获取
+        Log.e("每列最大宽度(dp)", mLockTableView.getColumnMaxWidths().toString());
+        Log.e("每行最大高度(dp)", mLockTableView.getRowMaxHeights().toString());
+        Log.e("表格所有的滚动视图", mLockTableView.getScrollViews().toString());
+        Log.e("表格头部固定视图(锁列)", mLockTableView.getLockHeadView().toString());
+        Log.e("表格头部固定视图(不锁列)", mLockTableView.getUnLockHeadView().toString());
+
+    }
+
+    private void initDisplayOpinion () {
+        DisplayMetrics dm = getResources().getDisplayMetrics();
+        DisplayUtil.density = dm.density;
+        DisplayUtil.densityDPI = dm.densityDpi;
+        DisplayUtil.screenWidthPx = dm.widthPixels;
+        DisplayUtil.screenhightPx = dm.heightPixels;
+        DisplayUtil.screenWidthDip = DisplayUtil.px2dip(getApplicationContext(), dm.widthPixels);
+        DisplayUtil.screenHightDip = DisplayUtil.px2dip(getApplicationContext(), dm.heightPixels);
     }
 
     @Override
@@ -115,9 +305,9 @@ public class MainActivity extends AppCompatActivity {
             EventBus.getDefault().unregister(this);
         }
 
-        unbindService(sc);
-        Intent intent = new Intent(getApplicationContext(), SocketService.class);
-        stopService(intent);
+        //unbindService(sc);
+        //Intent intent = new Intent(getApplicationContext(), SocketService.class);
+        //stopService(intent);
        }
 
 
@@ -233,18 +423,24 @@ public class MainActivity extends AppCompatActivity {
 
     private void initView() {
 
-        pl_root = findViewById(R.id.id_pl_root);
-        lv_content = findViewById(R.id.id_lv_content);
+//        pl_root = findViewById(R.id.id_pl_root);
+//        lv_content = findViewById(R.id.id_lv_content);
 
         //设置listView为多选模式，长按自动触发
-        //lv_content.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+        lv_content.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         //lv_content.setMultiChoiceModeListener(new MultiChoiceModeCallback());
+
 
         //listView的点击监听
         lv_content.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Toast.makeText(MainActivity.this, "你选中的position为：" + position, Toast.LENGTH_SHORT).show();
+                lv_content.setSelector(R.color.colorlvBtn);
+                //parent.setSelection(position);
+                //parent.
+                //parent.setBackgroundColor(Color.WHITE);
+                //view.setBackgroundColor(Color.BLUE);
             }
         });
     }
@@ -402,15 +598,25 @@ public class MainActivity extends AppCompatActivity {
 //                    clientThread.revHandler.sendMessage(msg);
                     //socketService.sendOrder(barcode.getText().toString());
 
-                    contentList.clear();
-                    List<String> data = new ArrayList<>();
-                    data.add("1-2-3");
-                    data.add("5");
-                    data.add("15");
-                    data.add("正常");
-                    contentList.add(data);
-                    adapter.notifyDataSetChanged();
+//                    contentList.clear();
+//                    List<String> data = new ArrayList<>();
+//                    data.add("1-2-3");
+//                    data.add("5");
+//                    data.add("15");
+//                    data.add("正常");
+//                    contentList.add(data);
+//                    adapter.notifyDataSetChanged();
+                    ArrayList<ArrayList<String>> datas = new ArrayList<ArrayList<String>>();
+                    for (int i=0; i<10; ++i){
+                        ArrayList<String> rowData = new ArrayList<String>();
+                        rowData.add("1-1-3");
+                        rowData.add("8");
+                        rowData.add("12");
+                        rowData.add("haha");
 
+                        datas.add(rowData);
+                    }
+                    changeTableData(datas);
                 } catch (Exception e){
                     e.printStackTrace();
                 }

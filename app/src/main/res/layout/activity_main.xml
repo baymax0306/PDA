@@ -12,22 +12,23 @@
         android:layout_height="wrap_content">
         <TextView
             android:id="@+id/textView"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="0.8"
+            android:layout_weight="1"
             android:text="条码："
             />
 
         <EditText
             android:id="@+id/editText_barcode"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="5"
+            android:layout_weight="6"
+            android:singleLine="true"
             android:hint="输入或扫描条码"/>
 
         <Button
             android:id="@+id/button_scan"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="扫描"/>
@@ -126,7 +127,7 @@
             android:text="完成加药" />
     </RelativeLayout>
 
-    <!--activity view-->
+    <!--activity view>
     <sysu.zyb.panellistlibrary.PanelListLayout
         android:id="@+id/id_pl_root"
         android:layout_marginTop="50dp"
@@ -140,8 +141,18 @@
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
             android:fastScrollEnabled="false"
-            android:overScrollMode="never" />
+            android:overScrollMode="never"
+            android:listSelector="#00000000"/>
 
-    </sysu.zyb.panellistlibrary.PanelListLayout>
+    </sysu.zyb.panellistlibrary.PanelListLayout-->
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/contentView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </LinearLayout>
+
+
 
 </LinearLayout>
